@@ -118,7 +118,7 @@ def pss_modbus_read_callback(data):
         pss_modbus_write(pss_modbus_write_dic['pen_missing'], [0])
 
 
-def modbus_read():
+def pss_modbus_read():
     rospy.Subscriber("/pilz_modbus_client_node/modbus_read", ModbusMsgInStamped, pss_modbus_read_callback, queue_size=1)
 
 
@@ -148,7 +148,7 @@ def init_modbus():
     """
     初始化部分通讯状态
     """
-    modbus_read()
+    pss_modbus_read()
     pss_modbus_write(pss_modbus_write_dic['box_request_in_process'], [0])
     pss_modbus_write(pss_modbus_write_dic['box_request_finished'], [0])
     pss_modbus_write(pss_modbus_write_dic['pen_request_in_process'], [0])
