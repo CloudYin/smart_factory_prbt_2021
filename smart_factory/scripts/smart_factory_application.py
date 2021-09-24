@@ -85,7 +85,7 @@ def pss_modbus_write(start_idx, values):
         print("Modbus write service call failed: %s" %e)
 
 
-def pss4000_modbus_read_callback(data):
+def pss_modbus_read_callback(data):
     global box_request 
     global pen_request 
     global box_handout
@@ -119,7 +119,7 @@ def pss4000_modbus_read_callback(data):
 
 
 def modbus_read():
-    rospy.Subscriber("/pilz_modbus_client_node/modbus_read", ModbusMsgInStamped, pss4000_modbus_read_callback, queue_size=1)
+    rospy.Subscriber("/pilz_modbus_client_node/modbus_read", ModbusMsgInStamped, pss_modbus_read_callback, queue_size=1)
 
 
 def cap_and_analyze():
