@@ -68,33 +68,36 @@ if __name__=="__main__":
     #     print("got line 0 is True from baxter")
     # else:
     #     print("timeout waiting for signal on line 0")
+    # while not rospy.is_shutdown():
+    #     rospy.loginfo(mws.store.getValues(2, 40021))
+    #     rospy.sleep(1)
     
     
     ###############
     # Example 3
     # Listen for the writeable modbus registers in any node
-    def callback(msg):
-        rospy.loginfo("Modbus register have been written: %s",str(msg.data))
-        rospy.sleep(2)
-    sub = rospy.Subscriber("modbus_server/read_from_registers",HoldingRegister,callback,queue_size=500) 
+    # def callback(msg):
+    #     rospy.loginfo("Modbus register have been written: %s",str(msg.data))
+    #     rospy.sleep(2)
+    # sub = rospy.Subscriber("modbus_server/read_from_registers",HoldingRegister,callback,queue_size=500) 
     ###############
     
     
     ###############
     # Example 4
     # Publisher to write first 20 modbus registers from any node
-    pub = rospy.Publisher("modbus_server/write_to_registers",HoldingRegister,queue_size=500)
-    rospy.sleep(1)
-    msg = HoldingRegister()
-    msg.data = range(20)
-    msg2 = HoldingRegister()
-    msg2.data = range(20,0,-1)
+    # pub = rospy.Publisher("modbus_server/write_to_registers",HoldingRegister,queue_size=500)
+    # rospy.sleep(1)
+    # msg = HoldingRegister()
+    # msg.data = range(20)
+    # msg2 = HoldingRegister()
+    # msg2.data = range(20,0,-1)
  
-    while not rospy.is_shutdown():
-        pub.publish(msg)
-        rospy.sleep(1)
-        pub.publish(msg2)
-        rospy.sleep(1)
+    # while not rospy.is_shutdown():
+    #     pub.publish(msg)
+    #     rospy.sleep(1)
+    #     pub.publish(msg2)
+    #     rospy.sleep(1)
     ################
     rospy.spin()
         

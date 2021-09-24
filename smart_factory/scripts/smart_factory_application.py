@@ -10,6 +10,7 @@ from prbt_hardware_support.msg import ModbusRegisterBlock, ModbusMsgInStamped
 from take_picture import take_picutre, undistort_pic
 from get_pen_pose import get_pen_pose
 from get_box_pose import get_box_pose
+from modbus_wrapper_server import ModbusWrapperServer
 
 
 # API版本号（不允许修改）
@@ -41,17 +42,16 @@ LIN_SCALE = 0.1         # 直线移动速度
 PnP_SCALE = 0.05         # 拾取与放置速度比例
 
 # 初始化变量
-
-# 接收自pss信号
 box_request = False
 pen_request = False
 box_handout = False
 pen_handout = False
-agv_at_SMF = False
-agv_placing_box_plate = False
-
 pen_pick_Y_list = []
 box_pick_Y_list = []
+
+# 接收自pss信号
+agv_at_SMF = False
+agv_placing_box_plate = False
 
 # 发送至PSS Modbus寄存器地址
 pss_modbus_write_dic = {
@@ -169,14 +169,26 @@ def init_modbus():
     pss_modbus_write(pss_modbus_write_dic['robot_program_start'], [1])
 
 
-# 主程序
-def start_program():
-    global box_request
-    global pen_request
-    global box_handout
-    global pen_handout
-    global pen_pick_Y_list
-    global box_pick_Y_list
+def modbus_server():
+    port = 1234
+    mws = ModbusWrapperServer(port)
+    rospy.on_shutdown(mws.stopServer)
+    mws.startServer()
+    print("Modbus server started")
+    return mws
+
+
+if __name__ == "__main__":
+
+    # 创建节点
+    rospy.init_node('robot_program_node')
+
+    # initialisation
+    r = Robot(REQUIRED_API_VERSION)  # 创建化机器人实例
+
+    # 启动通讯
+    init_modbus()
+    mws = modbus_server()
 
     rospy.loginfo("Program started")  # log
     pss_modbus_write(pss_modbus_write_dic['robot_program_start'], [1])
@@ -194,6 +206,7 @@ def start_program():
         r.move(Lin(goal=Pose(position=Point(0, 0, -0.1)), reference_frame="prbt_tcp", vel_scale=LIN_SCALE, acc_scale=0.1))
     r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
     pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
+    mws.store.setValues(3, 40007, [1])
     
 
     while not rospy.is_shutdown():
@@ -360,18 +373,5 @@ def start_program():
 
         rospy.sleep(1)
 
-
-if __name__ == "__main__":
-    # 创建节点
-    rospy.init_node('robot_program_node')
-
-    # initialisation
-    r = Robot(REQUIRED_API_VERSION)  # 创建化机器人实例
-
-    # 启动通讯
-    init_modbus()
-
-    # 启动程序
-    start_program()
-
     rospy.spin()
+    mws.stopServer()
