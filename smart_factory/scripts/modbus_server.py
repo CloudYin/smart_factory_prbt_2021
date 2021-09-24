@@ -72,7 +72,6 @@ if __name__=="__main__":
     #     rospy.loginfo(mws.store.getValues(2, 40021))
     #     rospy.sleep(1)
     
-    
     ###############
     # Example 3
     # Listen for the writeable modbus registers in any node

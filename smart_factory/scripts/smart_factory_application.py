@@ -206,7 +206,7 @@ if __name__ == "__main__":
         r.move(Lin(goal=Pose(position=Point(0, 0, -0.1)), reference_frame="prbt_tcp", vel_scale=LIN_SCALE, acc_scale=0.1))
     r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
     pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
-    mws.store.setValues(3, 40007, [1])
+    mws.store.setValues(3, 40006, [1])
     
 
     while not rospy.is_shutdown():

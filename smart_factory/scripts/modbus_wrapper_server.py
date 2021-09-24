@@ -49,8 +49,8 @@ from pymodbus.datastore import ModbusSequentialDataBlock
 from pymodbus.datastore import ModbusSlaveContext, ModbusServerContext
 
 
-ADDRESS_WRITE_START = 40001
-ADDRESS_READ_START = 40021
+ADDRESS_WRITE_START = 40000
+ADDRESS_READ_START = 40020
 
 class CustomHoldingRegister(ModbusSequentialDataBlock):
     def __init__(self,address,value,sub_topic,pub_topic):
