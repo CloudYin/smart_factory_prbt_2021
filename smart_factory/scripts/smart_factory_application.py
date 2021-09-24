@@ -76,7 +76,7 @@ pss_modbus_write_dic = {
     }
 
 
-def modbus_write(start_idx, values):
+def pss_modbus_write(start_idx, values):
     rospy.wait_for_service('/pilz_modbus_client_node/modbus_write')
     try:
         modbus_write_client = rospy.ServiceProxy('/pilz_modbus_client_node/modbus_write', WriteModbusRegister)
@@ -85,7 +85,7 @@ def modbus_write(start_idx, values):
         print("Modbus write service call failed: %s" %e)
 
 
-def modbus_read_callback(data):
+def pss4000_modbus_read_callback(data):
     global box_request 
     global pen_request 
     global box_handout
@@ -106,20 +106,20 @@ def modbus_read_callback(data):
 
     if not robot_run_permission or external_stop:
         r.pause()
-        modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
+        pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
         
     if external_start:
         rospy.sleep(1)
         r.resume()
-        modbus_write(pss_modbus_write_dic['robot_stopped'], [0])
+        pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [0])
 
     if external_reset:
-        modbus_write(pss_modbus_write_dic['box_missing'], [0])
-        modbus_write(pss_modbus_write_dic['pen_missing'], [0])
+        pss_modbus_write(pss_modbus_write_dic['box_missing'], [0])
+        pss_modbus_write(pss_modbus_write_dic['pen_missing'], [0])
 
 
 def modbus_read():
-    rospy.Subscriber("/pilz_modbus_client_node/modbus_read", ModbusMsgInStamped, modbus_read_callback, queue_size=1)
+    rospy.Subscriber("/pilz_modbus_client_node/modbus_read", ModbusMsgInStamped, pss4000_modbus_read_callback, queue_size=1)
 
 
 def cap_and_analyze():
@@ -134,14 +134,14 @@ def cap_and_analyze():
     box_pick_Y_list = get_box_pose(cap_calibrated_file_path)
     if len(pen_pick_Y_list) == 0:
         rospy.loginfo("pen missing!")
-        modbus_write(pss_modbus_write_dic['pen_missing'], [1])
+        pss_modbus_write(pss_modbus_write_dic['pen_missing'], [1])
     else:
-        modbus_write(pss_modbus_write_dic['pen_missing'], [0])
+        pss_modbus_write(pss_modbus_write_dic['pen_missing'], [0])
     if len(box_pick_Y_list) == 0:
         rospy.loginfo("box missing!")
-        modbus_write(pss_modbus_write_dic['box_missing'], [1])
+        pss_modbus_write(pss_modbus_write_dic['box_missing'], [1])
     else:
-        modbus_write(pss_modbus_write_dic['box_missing'], [0])
+        pss_modbus_write(pss_modbus_write_dic['box_missing'], [0])
 
 
 def init_modbus():
@@ -149,24 +149,24 @@ def init_modbus():
     初始化部分通讯状态
     """
     modbus_read()
-    modbus_write(pss_modbus_write_dic['box_request_in_process'], [0])
-    modbus_write(pss_modbus_write_dic['box_request_finished'], [0])
-    modbus_write(pss_modbus_write_dic['pen_request_in_process'], [0])
-    modbus_write(pss_modbus_write_dic['pen_request_finished'], [0])
-    modbus_write(pss_modbus_write_dic['box_handout_in_process'], [0])
-    modbus_write(pss_modbus_write_dic['box_handout_finished'], [0])
-    modbus_write(pss_modbus_write_dic['pen_handout_in_process'], [0])
-    modbus_write(pss_modbus_write_dic['pen_handout_finished'], [0])
-    modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
-    modbus_write(pss_modbus_write_dic['box_missing'], [0])
-    modbus_write(pss_modbus_write_dic['pen_missing'], [0])
-    modbus_write(pss_modbus_write_dic['robot_at_home'], [0])
-    modbus_write(pss_modbus_write_dic['gripper_open'], [1])
-    modbus_write(pss_modbus_write_dic['gripper_close'], [0])
-    modbus_write(pss_modbus_write_dic['sucker_on'], [0])
-    modbus_write(pss_modbus_write_dic['robot_program_start'], [0])
+    pss_modbus_write(pss_modbus_write_dic['box_request_in_process'], [0])
+    pss_modbus_write(pss_modbus_write_dic['box_request_finished'], [0])
+    pss_modbus_write(pss_modbus_write_dic['pen_request_in_process'], [0])
+    pss_modbus_write(pss_modbus_write_dic['pen_request_finished'], [0])
+    pss_modbus_write(pss_modbus_write_dic['box_handout_in_process'], [0])
+    pss_modbus_write(pss_modbus_write_dic['box_handout_finished'], [0])
+    pss_modbus_write(pss_modbus_write_dic['pen_handout_in_process'], [0])
+    pss_modbus_write(pss_modbus_write_dic['pen_handout_finished'], [0])
+    pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
+    pss_modbus_write(pss_modbus_write_dic['box_missing'], [0])
+    pss_modbus_write(pss_modbus_write_dic['pen_missing'], [0])
+    pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [0])
+    pss_modbus_write(pss_modbus_write_dic['gripper_open'], [1])
+    pss_modbus_write(pss_modbus_write_dic['gripper_close'], [0])
+    pss_modbus_write(pss_modbus_write_dic['sucker_on'], [0])
+    pss_modbus_write(pss_modbus_write_dic['robot_program_start'], [0])
     rospy.sleep(0.5)
-    modbus_write(pss_modbus_write_dic['robot_program_start'], [1])
+    pss_modbus_write(pss_modbus_write_dic['robot_program_start'], [1])
 
 
 # 主程序
@@ -179,7 +179,7 @@ def start_program():
     global box_pick_Y_list
 
     rospy.loginfo("Program started")  # log
-    modbus_write(pss_modbus_write_dic['robot_program_start'], [1])
+    pss_modbus_write(pss_modbus_write_dic['robot_program_start'], [1])
 
     """
     工艺安全设置
@@ -193,7 +193,7 @@ def start_program():
     elif current_pose.position.y > 0.3 and current_pose.position.z > 0.4:
         r.move(Lin(goal=Pose(position=Point(0, 0, -0.1)), reference_frame="prbt_tcp", vel_scale=LIN_SCALE, acc_scale=0.1))
     r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
-    modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
+    pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
     
 
     while not rospy.is_shutdown():
@@ -201,162 +201,162 @@ def start_program():
 
         # 名片盒取料工序
         if box_request and (len(box_pick_Y_list) != 0) and not (agv_at_SMF or agv_placing_box_plate):
-            modbus_write(pss_modbus_write_dic['box_request_in_process'], [1])
-            modbus_write(pss_modbus_write_dic['box_request_finished'], [0])
-            modbus_write(pss_modbus_write_dic['use_gripper'], [0])
-            modbus_write(pss_modbus_write_dic['use_sucker'], [1])
-            modbus_write(pss_modbus_write_dic['sucker_on'], [0])
+            pss_modbus_write(pss_modbus_write_dic['box_request_in_process'], [1])
+            pss_modbus_write(pss_modbus_write_dic['box_request_finished'], [0])
+            pss_modbus_write(pss_modbus_write_dic['use_gripper'], [0])
+            pss_modbus_write(pss_modbus_write_dic['use_sucker'], [1])
+            pss_modbus_write(pss_modbus_write_dic['sucker_on'], [0])
             box_stock_pick_up_pose = Pose(position=Point(STOCK_BOX_X, box_pick_Y_list[0], STOCK_Z_UP), orientation=SUCKER_INFEED_ORIENTATION)
             box_stock_pick_down_pose = Pose(position=Point(STOCK_BOX_X, box_pick_Y_list[0], STOCK_BOX_Z_DOWN), orientation=SUCKER_INFEED_ORIENTATION)
             box_conveyor_place_up_pose = Pose(position=Point(0.3865, 0.165, STOCK_Z_UP), orientation=SUCKER_INFEED_ORIENTATION)
             box_conveyor_place_down_pose = Pose(position=Point(0.3865, 0.165, PLATE_BOX_Z_DOWN), orientation=SUCKER_INFEED_ORIENTATION)
 
-            modbus_write(pss_modbus_write_dic['robot_stopped'], [0])    
-            modbus_write(pss_modbus_write_dic['robot_at_home'], [0])
+            pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [0])    
+            pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [0])
             r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
             r.move(Lin(goal=box_stock_pick_up_pose, reference_frame="prbt_base_link", vel_scale=LIN_SCALE, acc_scale=0.1))
             r.move(Lin(goal=box_stock_pick_down_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
-            modbus_write(pss_modbus_write_dic['sucker_on'], [1])
+            pss_modbus_write(pss_modbus_write_dic['sucker_on'], [1])
             rospy.sleep(0.5)
             if len(box_pick_Y_list) == 1:
-                modbus_write(pss_modbus_write_dic['box_missing'], [1])
+                pss_modbus_write(pss_modbus_write_dic['box_missing'], [1])
 
             r.move(Lin(goal=box_stock_pick_up_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
             r.move(Lin(goal=box_conveyor_place_up_pose, reference_frame="prbt_base_link", vel_scale=LIN_SCALE, acc_scale=0.1))
             r.move(Lin(goal=box_conveyor_place_down_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
-            modbus_write(pss_modbus_write_dic['sucker_on'], [0])
+            pss_modbus_write(pss_modbus_write_dic['sucker_on'], [0])
             rospy.sleep(0.5)
             r.move(Lin(goal=box_conveyor_place_up_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
-            modbus_write(pss_modbus_write_dic['box_request_in_process'], [0])
-            modbus_write(pss_modbus_write_dic['box_request_finished'], [1])
+            pss_modbus_write(pss_modbus_write_dic['box_request_in_process'], [0])
+            pss_modbus_write(pss_modbus_write_dic['box_request_finished'], [1])
             r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
-            modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
-            modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
+            pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
+            pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
         else:
-            modbus_write(pss_modbus_write_dic['box_request_finished'], [0])
+            pss_modbus_write(pss_modbus_write_dic['box_request_finished'], [0])
 
 
         # 笔取料工序
         if pen_request and (len(pen_pick_Y_list) != 0) and not agv_at_SMF:
-            modbus_write(pss_modbus_write_dic['pen_request_in_process'], [1])
-            modbus_write(pss_modbus_write_dic['pen_request_finished'], [0])
-            modbus_write(pss_modbus_write_dic['use_gripper'], [1])
-            modbus_write(pss_modbus_write_dic['use_sucker'], [0])
-            modbus_write(pss_modbus_write_dic['gripper_open'], [1])
-            modbus_write(pss_modbus_write_dic['gripper_close'], [0])
+            pss_modbus_write(pss_modbus_write_dic['pen_request_in_process'], [1])
+            pss_modbus_write(pss_modbus_write_dic['pen_request_finished'], [0])
+            pss_modbus_write(pss_modbus_write_dic['use_gripper'], [1])
+            pss_modbus_write(pss_modbus_write_dic['use_sucker'], [0])
+            pss_modbus_write(pss_modbus_write_dic['gripper_open'], [1])
+            pss_modbus_write(pss_modbus_write_dic['gripper_close'], [0])
             pen_stock_pick_up_pose = Pose(position=Point(STOCK_PEN_X, pen_pick_Y_list[0], STOCK_Z_UP), orientation=GRIPPER_ORIENTATION)
             pen_stock_pick_down_pose = Pose(position=Point(STOCK_PEN_X, pen_pick_Y_list[0], STOCK_PEN_Z_DOWN), orientation=GRIPPER_ORIENTATION)
             pen_conveyor_place_up_pose = Pose(position=Point(0.393, 0.1665, STOCK_Z_UP), orientation=GRIPPER_ORIENTATION)
             pen_conveyor_place_down_pose = Pose(position=Point(0.393, 0.1665, PLATE_PEN_Z_DOWN), orientation=GRIPPER_ORIENTATION)
 
-            modbus_write(pss_modbus_write_dic['robot_stopped'], [0])    
-            modbus_write(pss_modbus_write_dic['robot_at_home'], [0])
+            pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [0])    
+            pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [0])
             r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
             r.move(Lin(goal=pen_stock_pick_up_pose, reference_frame="prbt_base_link", vel_scale=LIN_SCALE, acc_scale=0.1))
             r.move(Lin(goal=pen_stock_pick_down_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
-            modbus_write(pss_modbus_write_dic['gripper_open'], [0])
-            modbus_write(pss_modbus_write_dic['gripper_close'], [1])
+            pss_modbus_write(pss_modbus_write_dic['gripper_open'], [0])
+            pss_modbus_write(pss_modbus_write_dic['gripper_close'], [1])
             rospy.sleep(0.5)
             if len(pen_pick_Y_list) == 1:
-                modbus_write(pss_modbus_write_dic['pen_missing'], [1])
+                pss_modbus_write(pss_modbus_write_dic['pen_missing'], [1])
                 
             r.move(Lin(goal=pen_stock_pick_up_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
             r.move(Lin(goal=pen_conveyor_place_up_pose, reference_frame="prbt_base_link", vel_scale=LIN_SCALE, acc_scale=0.1))
             r.move(Lin(goal=pen_conveyor_place_down_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
-            modbus_write(pss_modbus_write_dic['gripper_open'], [1])
-            modbus_write(pss_modbus_write_dic['gripper_close'], [0])
+            pss_modbus_write(pss_modbus_write_dic['gripper_open'], [1])
+            pss_modbus_write(pss_modbus_write_dic['gripper_close'], [0])
             rospy.sleep(0.5)
             r.move(Lin(goal=pen_conveyor_place_up_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
-            modbus_write(pss_modbus_write_dic['pen_request_in_process'], [0])
-            modbus_write(pss_modbus_write_dic['pen_request_finished'], [1])
+            pss_modbus_write(pss_modbus_write_dic['pen_request_in_process'], [0])
+            pss_modbus_write(pss_modbus_write_dic['pen_request_finished'], [1])
             r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
-            modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
-            modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
+            pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
+            pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
         else:
-            modbus_write(pss_modbus_write_dic['pen_request_finished'], [0])
+            pss_modbus_write(pss_modbus_write_dic['pen_request_finished'], [0])
         
         # 名片盒出料工序
         if box_handout:
-            modbus_write(pss_modbus_write_dic['box_handout_in_process'], [1])
-            modbus_write(pss_modbus_write_dic['box_handout_finished'], [0])
-            modbus_write(pss_modbus_write_dic['use_gripper'], [0])
-            modbus_write(pss_modbus_write_dic['use_sucker'], [1])
-            modbus_write(pss_modbus_write_dic['sucker_on'], [0])
+            pss_modbus_write(pss_modbus_write_dic['box_handout_in_process'], [1])
+            pss_modbus_write(pss_modbus_write_dic['box_handout_finished'], [0])
+            pss_modbus_write(pss_modbus_write_dic['use_gripper'], [0])
+            pss_modbus_write(pss_modbus_write_dic['use_sucker'], [1])
+            pss_modbus_write(pss_modbus_write_dic['sucker_on'], [0])
             box_conveyor_pick_up_pose = Pose(position=Point(-0.011, 0.33, STOCK_Z_UP), orientation=SUCKER_OUTFEED_ORIENTATION)
             box_conveyor_pick_down_pose = Pose(position=Point(-0.011, 0.33, PLATE_BOX_Z_DOWN), orientation=SUCKER_OUTFEED_ORIENTATION)
             box_outlet_in_pose = [0.082, -0.046, -1.211, 0.615, -1.850, -0.508]
             box_outlet_out_pose = [0.629, 0.069, -1.243, 0.464, -1.458, -0.140]
 
-            modbus_write(pss_modbus_write_dic['robot_stopped'], [0])    
-            modbus_write(pss_modbus_write_dic['robot_at_home'], [0])
+            pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [0])    
+            pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [0])
             box_handout_pick_seq = Sequence()
             box_handout_pick_seq.append(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
             box_handout_pick_seq.append(Lin(goal=ROBOT_HANDOUT_MIDDLE_WP, vel_scale=LIN_SCALE, acc_scale=0.1), blend_radius=0.1)
             box_handout_pick_seq.append(Lin(goal=box_conveyor_pick_up_pose, reference_frame="prbt_base_link", vel_scale=LIN_SCALE, acc_scale=0.1))
             r.move(box_handout_pick_seq)
             r.move(Lin(goal=box_conveyor_pick_down_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
-            modbus_write(pss_modbus_write_dic['sucker_on'], [1])
+            pss_modbus_write(pss_modbus_write_dic['sucker_on'], [1])
             rospy.sleep(0.5)
             r.move(Lin(goal=box_conveyor_pick_up_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
-            modbus_write(pss_modbus_write_dic['box_handout_in_process'], [0])
-            modbus_write(pss_modbus_write_dic['box_handout_finished'], [1])
+            pss_modbus_write(pss_modbus_write_dic['box_handout_in_process'], [0])
+            pss_modbus_write(pss_modbus_write_dic['box_handout_finished'], [1])
 
             box_handout_place_seq = Sequence()
             box_handout_place_seq.append(Lin(goal=ROBOT_HANDOUT_MIDDLE_WP, vel_scale=LIN_SCALE, acc_scale=0.1), blend_radius=0.1)
             box_handout_place_seq.append(Lin(goal=box_outlet_in_pose, reference_frame="prbt_base_link", vel_scale=LIN_SCALE, acc_scale=0.1), blend_radius=0.1)
             box_handout_place_seq.append(Lin(goal=box_outlet_out_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
             r.move(box_handout_place_seq)
-            modbus_write(pss_modbus_write_dic['sucker_on'], [0])
+            pss_modbus_write(pss_modbus_write_dic['sucker_on'], [0])
             rospy.sleep(0.5)
             r.move(Lin(goal=box_outlet_in_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
             r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
-            modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
-            modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
+            pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
+            pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
         else:
-            modbus_write(pss_modbus_write_dic['box_handout_finished'], [0])
+            pss_modbus_write(pss_modbus_write_dic['box_handout_finished'], [0])
 
         # 笔出料工序
         if pen_handout:
-            modbus_write(pss_modbus_write_dic['pen_handout_in_process'], [1])
-            modbus_write(pss_modbus_write_dic['pen_handout_finished'], [0])
-            modbus_write(pss_modbus_write_dic['use_gripper'], [1])
-            modbus_write(pss_modbus_write_dic['use_sucker'], [0])
-            modbus_write(pss_modbus_write_dic['gripper_open'], [1])
-            modbus_write(pss_modbus_write_dic['gripper_close'], [0])
+            pss_modbus_write(pss_modbus_write_dic['pen_handout_in_process'], [1])
+            pss_modbus_write(pss_modbus_write_dic['pen_handout_finished'], [0])
+            pss_modbus_write(pss_modbus_write_dic['use_gripper'], [1])
+            pss_modbus_write(pss_modbus_write_dic['use_sucker'], [0])
+            pss_modbus_write(pss_modbus_write_dic['gripper_open'], [1])
+            pss_modbus_write(pss_modbus_write_dic['gripper_close'], [0])
             pen_conveyor_pick_up_pose = Pose(position=Point(-0.005, 0.329, STOCK_Z_UP), orientation=GRIPPER_ORIENTATION)
             pen_conveyor_pick_down_pose = Pose(position=Point(-0.005, 0.329, PLATE_PEN_Z_DOWN), orientation=GRIPPER_ORIENTATION)
             pen_outlet_in_pose = [-0.010, 0.040, -1.106, 0.782, -1.889, 1.068]
             pen_outlet_out_pose = [0.439, 0.061, -1.328, 0.659, -1.425, 1.233]
 
-            modbus_write(pss_modbus_write_dic['robot_stopped'], [0])    
-            modbus_write(pss_modbus_write_dic['robot_at_home'], [0])
+            pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [0])    
+            pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [0])
             pen_handout_pick_seq = Sequence()
             pen_handout_pick_seq.append(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
             pen_handout_pick_seq.append(Lin(goal=ROBOT_HANDOUT_MIDDLE_WP, vel_scale=LIN_SCALE, acc_scale=0.1), blend_radius=0.1)
             pen_handout_pick_seq.append(Lin(goal=pen_conveyor_pick_up_pose, reference_frame="prbt_base_link", vel_scale=LIN_SCALE, acc_scale=0.1))
             r.move(pen_handout_pick_seq)
             r.move(Lin(goal=pen_conveyor_pick_down_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
-            modbus_write(pss_modbus_write_dic['gripper_open'], [0])
-            modbus_write(pss_modbus_write_dic['gripper_close'], [1])
+            pss_modbus_write(pss_modbus_write_dic['gripper_open'], [0])
+            pss_modbus_write(pss_modbus_write_dic['gripper_close'], [1])
             rospy.sleep(0.5)
             r.move(Lin(goal=pen_conveyor_pick_up_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
-            modbus_write(pss_modbus_write_dic['pen_handout_in_process'], [0])
-            modbus_write(pss_modbus_write_dic['pen_handout_finished'], [1])
+            pss_modbus_write(pss_modbus_write_dic['pen_handout_in_process'], [0])
+            pss_modbus_write(pss_modbus_write_dic['pen_handout_finished'], [1])
 
             pen_handout_place_seq = Sequence()
             pen_handout_place_seq.append(Lin(goal=ROBOT_HANDOUT_MIDDLE_WP, vel_scale=LIN_SCALE, acc_scale=0.1), blend_radius=0.1)
             pen_handout_place_seq.append(Lin(goal=pen_outlet_in_pose, reference_frame="prbt_base_link", vel_scale=LIN_SCALE, acc_scale=0.1), blend_radius=0.1)
             pen_handout_place_seq.append(Lin(goal=pen_outlet_out_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
             r.move(pen_handout_place_seq)
-            modbus_write(pss_modbus_write_dic['gripper_open'], [1])
-            modbus_write(pss_modbus_write_dic['gripper_close'], [0])
+            pss_modbus_write(pss_modbus_write_dic['gripper_open'], [1])
+            pss_modbus_write(pss_modbus_write_dic['gripper_close'], [0])
             rospy.sleep(0.5)
             r.move(Lin(goal=pen_outlet_in_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
             r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
-            modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
-            modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
+            pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
+            pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
         else:
-            modbus_write(pss_modbus_write_dic['pen_handout_finished'], [0])
+            pss_modbus_write(pss_modbus_write_dic['pen_handout_finished'], [0])
 
         rospy.sleep(1)
 
