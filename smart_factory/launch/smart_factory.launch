@@ -19,7 +19,7 @@ limitations under the License.
 <launch>
 
     <!-- The "sim" argument controls whether we connect to a Simulated or Real robot -->
-    <arg name="sim" default="false" />
+    <arg name="sim" default="true" />
 
     <!-- For a customized gripper, do not set gripper value -->
     <arg name="gripper" value="" />
@@ -82,6 +82,6 @@ limitations under the License.
     </group>
 
     <!-- startup application script with state-machine-based or similar procedural control -->
-    <node name="modbus_server_node" pkg="smart_factory" type="modbus_server.py" /> 
+    <node name="smart_factory_application_node" pkg="smart_factory" type="smart_factory_application.py" /> 
 
 </launch>

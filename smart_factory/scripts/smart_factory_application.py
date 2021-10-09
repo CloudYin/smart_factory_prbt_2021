@@ -37,9 +37,9 @@ cap_original_file_path = "/home/pilz/Pictures/smart_factory/cap.png"
 cap_calibrated_file_path = "/home/pilz/Pictures/smart_factory/cap_calibrated.png"
 
 # 速度常量
-PTP_SCALE = 0.2         # 直线移动速度
+PTP_SCALE = 0.2         # 点到点移动速度
 LIN_SCALE = 0.1         # 直线移动速度
-PnP_SCALE = 0.05         # 拾取与放置速度比例
+PnP_SCALE = 0.05        # 拾取与放置速度比例
 
 # 初始化变量
 box_request = False
@@ -50,8 +50,7 @@ pen_pick_Y_list = []
 box_pick_Y_list = []
 
 # 接收自pss信号
-agv_at_SMF = False
-agv_placing_box_plate = False
+
 
 # 发送至PSS Modbus寄存器地址
 pss_modbus_write_dic = {
@@ -90,12 +89,8 @@ def pss_modbus_read_callback(data):
     global pen_request 
     global box_handout
     global pen_handout
-    global agv_at_SMF
-    global agv_placing_box_plate
     
     robot_run_permission = data.holding_registers.data[4]
-    agv_at_SMF = data.holding_registers.data[10]
-    agv_placing_box_plate = data.holding_registers.data[12]
     box_request = data.holding_registers.data[21]
     pen_request = data.holding_registers.data[22]
     box_handout = data.holding_registers.data[23]
@@ -122,7 +117,7 @@ def pss_modbus_read():
     rospy.Subscriber("/pilz_modbus_client_node/modbus_read", ModbusMsgInStamped, pss_modbus_read_callback, queue_size=1)
 
 
-def cap_and_analyze():
+def cap_and_analyze(pymodbus_server):
     """
     拍照并获取笔和名片夹Y方向位置
     """
@@ -135,13 +130,17 @@ def cap_and_analyze():
     if len(pen_pick_Y_list) == 0:
         rospy.loginfo("pen missing!")
         pss_modbus_write(pss_modbus_write_dic['pen_missing'], [1])
+        pymodbus_server.store.setValues(3, 40001, [1])
     else:
         pss_modbus_write(pss_modbus_write_dic['pen_missing'], [0])
+        pymodbus_server.store.setValues(3, 40001, [0])
     if len(box_pick_Y_list) == 0:
         rospy.loginfo("box missing!")
         pss_modbus_write(pss_modbus_write_dic['box_missing'], [1])
+        pymodbus_server.store.setValues(3, 40000, [1])
     else:
         pss_modbus_write(pss_modbus_write_dic['box_missing'], [0])
+        pymodbus_server.store.setValues(3, 40000, [0])
 
 
 def init_modbus():
@@ -204,17 +203,22 @@ if __name__ == "__main__":
         r.move(Lin(goal=Pose(position=Point(0, 0, -0.05)), reference_frame="prbt_tcp", vel_scale=LIN_SCALE, acc_scale=0.1))
     elif current_pose.position.y > 0.3 and current_pose.position.z > 0.4:
         r.move(Lin(goal=Pose(position=Point(0, 0, -0.1)), reference_frame="prbt_tcp", vel_scale=LIN_SCALE, acc_scale=0.1))
-    r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
+    r.move(Ptp(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
     pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
     mws.store.setValues(3, 40006, [1])
     
 
     while not rospy.is_shutdown():
-        cap_and_analyze()
+        cap_and_analyze(mws)
 
         # 名片盒取料工序
-        if box_request and (len(box_pick_Y_list) != 0) and not (agv_at_SMF or agv_placing_box_plate):
+        agv_at_SMF = mws.store.getValues(3, 40020, 1)[0]
+        agv_placing_box_plate = mws.store.getValues(3, 40021, 1)[0]
+        agv_placing_pen_plate = mws.store.getValues(3, 40022, 1)[0]
+        agv_robot_at_home = mws.store.getValues(3, 40023, 1)[0]
+        if box_request and (len(box_pick_Y_list) != 0) and not (agv_at_SMF or agv_placing_box_plate or agv_placing_pen_plate):
             pss_modbus_write(pss_modbus_write_dic['box_request_in_process'], [1])
+            mws.store.setValues(3, 40002, [1])
             pss_modbus_write(pss_modbus_write_dic['box_request_finished'], [0])
             pss_modbus_write(pss_modbus_write_dic['use_gripper'], [0])
             pss_modbus_write(pss_modbus_write_dic['use_sucker'], [1])
@@ -226,13 +230,12 @@ if __name__ == "__main__":
 
             pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [0])    
             pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [0])
+            mws.store.setValues(3, 40006, [0])
             r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
             r.move(Lin(goal=box_stock_pick_up_pose, reference_frame="prbt_base_link", vel_scale=LIN_SCALE, acc_scale=0.1))
             r.move(Lin(goal=box_stock_pick_down_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
             pss_modbus_write(pss_modbus_write_dic['sucker_on'], [1])
             rospy.sleep(0.5)
-            if len(box_pick_Y_list) == 1:
-                pss_modbus_write(pss_modbus_write_dic['box_missing'], [1])
 
             r.move(Lin(goal=box_stock_pick_up_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
             r.move(Lin(goal=box_conveyor_place_up_pose, reference_frame="prbt_base_link", vel_scale=LIN_SCALE, acc_scale=0.1))
@@ -245,13 +248,21 @@ if __name__ == "__main__":
             r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
             pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
             pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
+            mws.store.setValues(3, 40002, [0])
+            mws.store.setValues(3, 40006, [1])
         else:
             pss_modbus_write(pss_modbus_write_dic['box_request_finished'], [0])
+            mws.store.setValues(3, 40002, [0])
 
 
         # 笔取料工序
-        if pen_request and (len(pen_pick_Y_list) != 0) and not agv_at_SMF:
+        agv_at_SMF = mws.store.getValues(3, 40020, 1)[0]
+        agv_placing_box_plate = mws.store.getValues(3, 40021, 1)[0]
+        agv_placing_pen_plate = mws.store.getValues(3, 40022, 1)[0]
+        agv_robot_at_home = mws.store.getValues(3, 40023, 1)[0]
+        if pen_request and (len(pen_pick_Y_list) != 0) and not (agv_at_SMF or agv_placing_box_plate or agv_placing_pen_plate):
             pss_modbus_write(pss_modbus_write_dic['pen_request_in_process'], [1])
+            mws.store.setValues(3, 40003, [1])
             pss_modbus_write(pss_modbus_write_dic['pen_request_finished'], [0])
             pss_modbus_write(pss_modbus_write_dic['use_gripper'], [1])
             pss_modbus_write(pss_modbus_write_dic['use_sucker'], [0])
@@ -264,14 +275,13 @@ if __name__ == "__main__":
 
             pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [0])    
             pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [0])
+            mws.store.setValues(3, 40006, [1])
             r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
             r.move(Lin(goal=pen_stock_pick_up_pose, reference_frame="prbt_base_link", vel_scale=LIN_SCALE, acc_scale=0.1))
             r.move(Lin(goal=pen_stock_pick_down_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
             pss_modbus_write(pss_modbus_write_dic['gripper_open'], [0])
             pss_modbus_write(pss_modbus_write_dic['gripper_close'], [1])
             rospy.sleep(0.5)
-            if len(pen_pick_Y_list) == 1:
-                pss_modbus_write(pss_modbus_write_dic['pen_missing'], [1])
                 
             r.move(Lin(goal=pen_stock_pick_up_pose, reference_frame="prbt_base_link", vel_scale=PnP_SCALE, acc_scale=0.1))
             r.move(Lin(goal=pen_conveyor_place_up_pose, reference_frame="prbt_base_link", vel_scale=LIN_SCALE, acc_scale=0.1))
@@ -285,12 +295,20 @@ if __name__ == "__main__":
             r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
             pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
             pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
+            mws.store.setValues(3, 40003, [0])
+            mws.store.setValues(3, 40006, [1])
         else:
             pss_modbus_write(pss_modbus_write_dic['pen_request_finished'], [0])
+            mws.store.setValues(3, 40003, [0])
         
         # 名片盒出料工序
+        agv_at_SMF = mws.store.getValues(3, 40020, 1)[0]
+        agv_placing_box_plate = mws.store.getValues(3, 40021, 1)[0]
+        agv_placing_pen_plate = mws.store.getValues(3, 40022, 1)[0]
+        agv_robot_at_home = mws.store.getValues(3, 40023, 1)[0]
         if box_handout:
             pss_modbus_write(pss_modbus_write_dic['box_handout_in_process'], [1])
+            mws.store.setValues(3, 40004, [1])
             pss_modbus_write(pss_modbus_write_dic['box_handout_finished'], [0])
             pss_modbus_write(pss_modbus_write_dic['use_gripper'], [0])
             pss_modbus_write(pss_modbus_write_dic['use_sucker'], [1])
@@ -302,6 +320,7 @@ if __name__ == "__main__":
 
             pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [0])    
             pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [0])
+            mws.store.setValues(3, 40006, [0])
             box_handout_pick_seq = Sequence()
             box_handout_pick_seq.append(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
             box_handout_pick_seq.append(Lin(goal=ROBOT_HANDOUT_MIDDLE_WP, vel_scale=LIN_SCALE, acc_scale=0.1), blend_radius=0.1)
@@ -325,12 +344,24 @@ if __name__ == "__main__":
             r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
             pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
             pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
+            mws.store.setValues(3, 40004, [0])
+            mws.store.setValues(3, 40006, [1])
         else:
             pss_modbus_write(pss_modbus_write_dic['box_handout_finished'], [0])
+            mws.store.setValues(3, 40004, [0])
 
         # 笔出料工序
+        agv_at_SMF = mws.store.getValues(3, 40020, 1)[0]
+        agv_placing_box_plate = mws.store.getValues(3, 40021, 1)[0]
+        agv_placing_pen_plate = mws.store.getValues(3, 40022, 1)[0]
+        agv_robot_at_home = mws.store.getValues(3, 40023, 1)[0]
         if pen_handout:
+            agv_at_SMF = mws.store.getValues(3, 40020, 1)[0]
+            agv_placing_box_plate = mws.store.getValues(3, 40021, 1)[0]
+            agv_placing_pen_plate = mws.store.getValues(3, 40022, 1)[0]
+            agv_robot_at_home = mws.store.getValues(3, 40023, 1)[0]
             pss_modbus_write(pss_modbus_write_dic['pen_handout_in_process'], [1])
+            mws.store.setValues(3, 40005, [1])
             pss_modbus_write(pss_modbus_write_dic['pen_handout_finished'], [0])
             pss_modbus_write(pss_modbus_write_dic['use_gripper'], [1])
             pss_modbus_write(pss_modbus_write_dic['use_sucker'], [0])
@@ -343,6 +374,7 @@ if __name__ == "__main__":
 
             pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [0])    
             pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [0])
+            mws.store.setValues(3, 40006, [0])
             pen_handout_pick_seq = Sequence()
             pen_handout_pick_seq.append(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
             pen_handout_pick_seq.append(Lin(goal=ROBOT_HANDOUT_MIDDLE_WP, vel_scale=LIN_SCALE, acc_scale=0.1), blend_radius=0.1)
@@ -368,8 +400,11 @@ if __name__ == "__main__":
             r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
             pss_modbus_write(pss_modbus_write_dic['robot_at_home'], [1])
             pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
+            mws.store.setValues(3, 40005, [0])
+            mws.store.setValues(3, 40006, [1])
         else:
             pss_modbus_write(pss_modbus_write_dic['pen_handout_finished'], [0])
+            mws.store.setValues(3, 40005, [0])
 
         rospy.sleep(1)
 
