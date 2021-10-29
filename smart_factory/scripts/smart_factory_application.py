@@ -103,7 +103,7 @@ def pss_modbus_read_callback(data):
         r.pause()
         pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [1])
         
-    if external_start:
+    if robot_run_permission and external_start:
         rospy.sleep(1)
         r.resume()
         pss_modbus_write(pss_modbus_write_dic['robot_stopped'], [0])
@@ -164,7 +164,7 @@ def init_modbus():
     pss_modbus_write(pss_modbus_write_dic['gripper_close'], [0])
     pss_modbus_write(pss_modbus_write_dic['sucker_on'], [0])
     pss_modbus_write(pss_modbus_write_dic['robot_program_start'], [0])
-    rospy.sleep(0.5)
+    rospy.sleep(1)
     pss_modbus_write(pss_modbus_write_dic['robot_program_start'], [1])
 
 
