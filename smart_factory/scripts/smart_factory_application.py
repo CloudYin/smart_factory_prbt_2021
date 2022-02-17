@@ -27,7 +27,7 @@ STOCK_Z_UP = 0.13
 STOCK_PEN_X = 0.275
 STOCK_PEN_Z_DOWN =  0.09
 PLATE_PEN_Z_DOWN =  0.091
-STOCK_BOX_X = 0.551
+STOCK_BOX_X = 0.552
 STOCK_BOX_Z_DOWN =  0.07
 PLATE_BOX_Z_DOWN =  0.085
 
@@ -39,7 +39,7 @@ cap_calibrated_file_path = "/home/pilz/Pictures/smart_factory/cap_calibrated.png
 # 速度常量
 PTP_SCALE = 0.2         # 点到点移动速度
 LIN_SCALE = 0.1         # 直线移动速度
-PnP_SCALE = 0.05        # 拾取与放置速度比例
+PnP_SCALE = 0.01        # 拾取与放置速度比例
 
 # 初始化变量
 box_request = False

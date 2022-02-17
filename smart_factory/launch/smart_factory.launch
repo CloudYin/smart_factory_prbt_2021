@@ -82,6 +82,6 @@ limitations under the License.
     </group>
 
     <!-- startup application script with state-machine-based or similar procedural control -->
-    <!-- <node name="smart_factory_application_node" pkg="smart_factory" type="smart_factory_application.py" />  -->
+   <!-- <node name="smart_factory_application_node" pkg="smart_factory" type="smart_factory_application.py" />--> 
 
 </launch>
