@@ -1,2 +1,2 @@
-# smart_factory_2021
-smart factory 2021 PRBT ROS project
+# smart_factory_2022
+smart factory 2022 PRBT ROS project

@@ -11,11 +11,9 @@
   <url type="website">https://wiki.ros.org/pilz_robots</url> 
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>roscpp</build_depend>
   <build_depend>rospy</build_depend>
-  <exec_depend>pilz_robot_programming</exec_depend>
-  <exec_depend>prbt_moveit_config</exec_depend>
-  <exec_depend>roscpp</exec_depend>
+  <build_depend>message_generation</build_depend>
   <exec_depend>rospy</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
 
 </package>
