@@ -35,9 +35,9 @@ PLATE_BOX_Z_DOWN = 0.085
 
 
 # 速度常量
-PTP_SCALE = 0.2  # 点到点移动速度
-LIN_SCALE = 0.1  # 直线移动速度
-PNP_SCALE = 0.01  # 拾取与放置速度比例
+PTP_SCALE = 0.3  # 点到点移动速度
+LIN_SCALE = 0.2  # 直线移动速度
+PNP_SCALE = 0.1  # 拾取与放置速度比例
 
 # 接收自pss信号
 
@@ -196,6 +196,11 @@ if __name__ == "__main__":
 
     init_modbus_value()
 
+    agv_at_smf = False
+    agv_prbt_changing_box = False
+    agv_prbt_changing_pen = False
+    agv_prbt_at_home = False
+
     """
     工艺安全设置
     获取当前机器人位置
@@ -325,10 +330,10 @@ if __name__ == "__main__":
                     acc_scale=0.1,
                 )
             )
-            r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
-
             pss_modbus_write(pss_modbus_write_dic["box_request_in_process"], [0])
             pss_modbus_write(pss_modbus_write_dic["box_request_finished"], [1])
+
+            r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
             pss_modbus_write(pss_modbus_write_dic["robot_at_home"], [1])
             pss_modbus_write(pss_modbus_write_dic["robot_stopped"], [1])
 
@@ -437,10 +442,10 @@ if __name__ == "__main__":
                     acc_scale=0.1,
                 )
             )
-            r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
-
             pss_modbus_write(pss_modbus_write_dic["pen_request_in_process"], [0])
             pss_modbus_write(pss_modbus_write_dic["pen_request_finished"], [1])
+
+            r.move(Lin(goal=START_POSE, vel_scale=LIN_SCALE, acc_scale=0.1))
             pss_modbus_write(pss_modbus_write_dic["robot_at_home"], [1])
             pss_modbus_write(pss_modbus_write_dic["robot_stopped"], [1])
 

@@ -106,7 +106,7 @@ class ImageProcessing:
                             [[[x, y]], [[x + w, y]], [[x + w, y + h]], [[x, y + h]]]
                         )
                         cv2.drawContours(img_contour, [points], -1, (0, 255, 0), 2)
-                        box_center_y = (20 - centerY * 0.2687) / 1000
+                        box_center_y = (17 - centerY * 0.2687) / 1000
                         box_centers_y.append(box_center_y)
                         cv2.circle(
                             img_contour, (int(centerX), int(centerY)), 5, (0, 0, 255)
